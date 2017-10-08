@@ -1,32 +1,56 @@
 import { Button, Table, PageHeader, ButtonToolbar, Modal } from 'react-bootstrap';
 import React from 'react';
+import {  BrowserRouter as Router, Route, Link } from 'react-router-dom'
 var PropTypes = require('prop-types');
 var api = require('../utils/api');
 
-class Device extends React.Component {
+class EditModal extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
-      device: props.device
-      showEditModal: false,
-      showDeleteModal: false
+      selectedDevice: null,
+      showModal: false
     };
   }
 
-  toggleEdit = (showEditModal) => {
-    !showEditModal
-      ? this.setState({ showEditModal: false })
-      : this.setState({ showEditModal: true })
-    console.log();
+  close = () => {
+    this.setState({ showModal: false });
+    console.log(this.state.showModal);
   }
 
-  toggleDelete = (showDeleteModal) => {
-    !showDeleteModal
-      ? this.setState({ showDeleteModal: false })
-      : this.setState({ showDeleteModal: true })
-    console.log(showDeleteModal);
+  open = () => {
+    this.setState({ showModal: true });
+    console.log(this.state.showModal);
   }
-  
+
+  render() {
+    return (
+      <div>
+        <Button bsSize="small" bsStyle="primary" onClick={this.open}>Edit</Button>
+        <Modal show={this.state.showModal} onHide={this.close}>
+          <Modal.Header closeButton>
+            <Modal.Title>Edit Device</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <h4>Text in a modal</h4>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={this.close}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    )
+  }
+}
+
+class Device extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      device: props.device
+    };
+  }
+
   render() {
     return (
       <tr key={this.state.device.hostname}>
@@ -40,7 +64,8 @@ class Device extends React.Component {
         <td>{this.state.device.mrv}</td>
         <td>
           <ButtonToolbar>
-              <Button bsSize="small" bsStyle="primary" onClick={this.props.toggleEdit}>Edit</Button>
+              <EditModal device={this.state.device} />
+              <Button bsSize="small" bsStyle="danger" onClick={this.props.toggleDelete}>Delete</Button>
           </ButtonToolbar>
         </td>
       </tr>
@@ -49,56 +74,13 @@ class Device extends React.Component {
 }
 
 
-class DeviceTable extends React.Component {
-  constructor(props) {
-    super();
-    this.state = {
-
-
-  render() {
-    return(
-      <Table striped bordered condensed hover>
-        <thead>
-          <tr>
-            <th>Hostname</th>
-            <th>Model</th>
-            <th>Serial</th>
-            <th>Mgmt. IP</th>
-            <th>Vendor</th>
-            <th>Rack</th>
-            <th>Lab Module</th>
-            <th>MRV</th>
-            <th>Controls</th>
-          </tr>
-        </thead>
-        <tbody>
-          {this.props.devices.map((device) => {
-            return (
-              <Device
-                key={device.hostname}
-                device={device}
-                toggleEdit={this.toggleEdit}
-                toggleDelete={this.toggleDelete}
-              />
-            )
-          })}
-        </tbody>
-      </Table>
-    )
-  }
-}
-
-DeviceTable.propTypes = {
-  devices: PropTypes.array.isRequired,
-};
-
 class Devices extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
-      devices: null
+      devices: null,
+      selectedDevice: null
     };
-
   }
   componentDidMount() {
     api.fetchDevices()
@@ -114,20 +96,45 @@ class Devices extends React.Component {
   render() {
     return (
       <div>
-        <PageHeader>Device Inventory <br/>
+        <PageHeader>Device Inventory<br/>
         {!this.state.devices
           ? <small>Number of Devices: Loading</small>
           : <small>Number of Devices: {this.state.devices.length}</small>}
         </PageHeader>
-
-
-
         {!this.state.devices
           ? <p>LOADING!</p>
-          : <DeviceTable devices={this.state.devices} />}
+          : (
+              <Table striped bordered condensed hover>
+                <thead>
+                  <tr>
+                    <th>Hostname</th>
+                    <th>Model</th>
+                    <th>Serial</th>
+                    <th>Mgmt. IP</th>
+                    <th>Vendor</th>
+                    <th>Rack</th>
+                    <th>Lab Module</th>
+                    <th>MRV</th>
+                    <th>Controls</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.devices.map((device) => {
+                    return (
+                      <Device
+                        key={device.hostname}
+                        device={device}
+                      />
+                    )
+                  })}
+                </tbody>
+              </Table>
+          )
+        }
       </div>
     )
   }
 }
+
 
 export default Devices;
