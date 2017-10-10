@@ -10,6 +10,9 @@ function Nav () {
       <li>
         <NavLink activeClassName='active' to='/devices'>Devices</NavLink>
       </li>
+      <li>
+        <NavLink activeClassName='active' to='/ipam'>IPAM</NavLink>
+      </li>
     </ul>
   )
 }

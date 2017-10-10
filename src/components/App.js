@@ -3,6 +3,7 @@ import {BrowserRouter as Router, Route, Switch} from 'react-router-dom';
 import Nav from './Nav';
 import Home from './Home';
 import Devices from './Devices';
+import IPAM from './IPAM';
 
 class App extends React.Component {
   render() {
@@ -12,8 +13,9 @@ class App extends React.Component {
           <Nav />
           <Switch>
             <Route exact path='/' component={Home} />
-            <Route exact path='/devices' component={Devices} />
-            <Route render={function () {
+            <Route path='/devices' component={Devices} />
+            <Route path='/ipam' component={IPAM} />
+              <Route render={function () {
               return <p>Not Found</p>
             }} />
           </Switch>

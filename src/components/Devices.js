@@ -1,165 +1,208 @@
-import { Button, Table, PageHeader, ButtonToolbar, Modal } from 'react-bootstrap';
 import React from 'react';
-import {  BrowserRouter as Router, Route, Link } from 'react-router-dom'
+import Table, { TableBody, TableCell, TableHead, TableRow } from 'material-ui/Table';
+import {Button} from 'material-ui';
+import TextField from 'material-ui/TextField';
+import Dialog, {
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from 'material-ui/Dialog';
 var PropTypes = require('prop-types');
 var api = require('../utils/api');
 
-class DeviceControl extends React.Component {
+
+class EditModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      device: props.device,
-      showEditModal: false
+        isOpen: props.isOpen,
+        device: Object.assign({}, props.device)
     };
-    this.showEditModal = this.showEditModal.bind(this);
   }
 
-  closeEdit() {
-    this.setState({ showEditModal: false });
-  }
-
-  openEdit() {
-    this.setState({ showEditModal: true });
-  }
+  handleChange = name => event => {
+    var state = this.state;
+    state.device[name] = event.target.value;
+    this.setState(state);
+   }
 
   render() {
     return (
-      <div>
-        <Button bsStyle="primary" bsSize="small" onClick={this.openEdit}>Edit</Button>
-​
-        <Modal show={this.state.showEditModal} onHide={this.closeEdit}>
-          <Modal.Header closeButton>
-            <Modal.Title>Editing Device {this.state.device.hostname}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>Hostname: {this.state.device.hostname}</p>
-            <p>Model: {this.state.device.model}</p>
-            <p>Serial: {this.state.device.serial}</p>
-            <p>Mgmt. IP: {this.state.device.mgmtIP}</p>
-            <p>Vendor: {this.state.device.vendor}</p>
-            <p>Rack: {this.state.device.rack}</p>
-            <p>Lab Module: {this.state.device.labmodule}</p>
-            <p>MRV: {this.state.device.mrv}</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.closeEdit}>Close</Button>
-          </Modal.Footer>
-        </Modal>
-      </div>
+      <Dialog open={this.state.isOpen} onRequestClose={this.props.onCancel}>
+        <DialogTitle>Edit Device {this.state.device.hostname}</DialogTitle>
+        <DialogContent>
+          <TextField
+            id="hostname"
+            label="Hostname"
+            margin="normal"
+            defaultValue={this.state.device.hostname}
+            onChange={this.handleChange('hostname')} />
+          <TextField
+            id="model"
+            label="Model"
+            margin="normal"
+            defaultValue={this.state.device.model}
+            onChange={this.handleChange('model')} />
+          <TextField
+            id="serial"
+            label="Serial"
+            margin="normal"
+            defaultValue={this.state.device.serial}
+            onChange={this.handleChange('serial')} />
+          <TextField
+            id="mgmtIP"
+            label="Mgmt. IP"
+            margin="normal"
+            defaultValue={this.state.device.mgmtIP}
+            onChange={this.handleChange('mgmtIP')} />
+          <TextField
+            id="vendor"
+            label="Vendor"
+            margin="normal"
+            defaultValue={this.state.device.vendor}
+            onChange={this.handleChange('vendor')} />
+          <TextField
+            id="rack"
+            label="Rack"
+            margin="normal"
+            defaultValue={this.state.device.rack}
+            onChange={this.handleChange('rack')} />
+          <TextField
+            id="labmodule"
+            label="Lab Module"
+            margin="normal"
+            defaultValue={this.state.device.labmodule}
+            onChange={this.handleChange('labmodule')} />
+          <TextField
+            id="mrv"
+            label="MRV"
+            margin="normal"
+            defaultValue={this.state.device.mrv}
+            onChange={this.handleChange('mrv')} />
+        </DialogContent>
+        <DialogActions>
+          <Button raised onClick={this.props.onCancel} color="primary">
+            Cancel
+          </Button>
+          <Button raised onClick={() => {this.props.onSubmit(this.state.device)}} color="accent">
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 }
-
-
-class Device extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      device: props.device
-    };
-  }
-
-  render() {
-    return (
-      <tr key={this.state.device.hostname}>
-        <p>{this.state.device.hostname}</p>
-        <p>{this.state.device.model}</p>
-        <p>{this.state.device.serial}</p>
-        <p>{this.state.device.mgmtIP}</p>
-        <p>{this.state.device.vendor}</p>
-        <p>{this.state.device.rack}</p>
-        <p>{this.state.device.labmodule}</p>
-        <p>{this.state.device.mrv}</p>
-        <p>
-            <Button bsSize="small" bsStyle="primary" onClick={() => this.props.showEditModal(this.state.device)}>Edit</Button>
-            <Button bsSize="small" bsStyle="danger" onClick={() => this.props.showDeleteModal(this.state.device)}>Delete</Button>
-        </p>
-      </tr>
-    )
-  }
-}
-
 
 class Devices extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      devices: null
+      devices: null,
+      showEditModal: false,
+      editingDevice: null
     };
-    this.showEditModal = this.showEditModal.bind(this);
-    this.showDeleteModal = this.showDeleteModal.bind(this);
+    this.openEditModal = this.openEditModal.bind(this);
+    this.cancelEditModal = this.cancelEditModal.bind(this);
+    this.submitEditModal = this.submitEditModal.bind(this);
+    this.loadDevicesFromServer = this.loadDevicesFromServer.bind(this);
   }
-  componenpidMount() {
+
+  loadDevicesFromServer() {
     api.fetchDevices()
-      .then((devices) => {
-        this.setState(function () {
-          return {
-            devices: devices
-          }
-        });
-      });
+    .then((newDevices) => {
+      console.log(this.state);
+      this.setState({devices: newDevices});
+    });
+    console.log("finished loadDevicesFromServer");
+
   }
 
-  showEditModal(device) {
-    console.log("SHOW EDIT MODAL FOR " + device.hostname);
-    return (
-      <Modal show={true} onHide={this.close}>
-          <Modal.Header closeButton>
-            <Modal.Title>Editing Device `"{device.hostname}"`</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <h4>Text in a modal</h4>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.close}>Close</Button>
-          </Modal.Footer>
-        </Modal>
-    )
+  componentDidMount() {
+    this.loadDevicesFromServer();
   }
 
-  showDeleteModal(device) {
-    console.log("SHOW DELETE MODAL FOR " + device.hostname);
+  openEditModal(device) {
+    console.log("Open Edit Modal for Device: "+ device.hostname);
+    this.setState({ editingDevice: device });
+    this.setState({ showEditModal: true });
+  }
+
+  submitEditModal(device) {
+    this.setState({ showEditModal: false });
+    this.setState({ editingDevice: null });
+
+    api.updateDevice(device);
+    this.loadDevicesFromServer();
+    // this.forceUpdate();
+  }
+
+  cancelEditModal(device) {
+    console.log("Cancel Edit Modal");
+    this.setState({ showEditModal: false });
+    this.setState({ editingDevice: null });
   }
 
   render() {
     return (
       <div>
-        <PageHeader>Device Inventory<br/>
+        <h1>Device Inventory</h1>
         {!this.state.devices
-          ? <small>Number of Devices: Loading</small>
-          : <small>Number of Devices: {this.state.devices.length}</small>}
-        </PageHeader>
+          ? <h4>Number of Devices: Loading</h4>
+          : <h4>Number of Devices: {this.state.devices.length}</h4>}
         {!this.state.devices
           ? <p>LOADING!</p>
           : (
               <div>
-                <Table striped bordered condensed hover>
-                  <thead>
-                    <tr>
-                      <th>Hostname</th>
-                      <th>Model</th>
-                      <th>Serial</th>
-                      <th>Mgmt. IP</th>
-                      <th>Vendor</th>
-                      <th>Rack</th>
-                      <th>Lab Module</th>
-                      <th>MRV</th>
-                      <th>Controls</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Hostname</TableCell>
+                      <TableCell>Model</TableCell>
+                      <TableCell>Serial</TableCell>
+                      <TableCell>Mgmt. IP</TableCell>
+                      <TableCell>Vendor</TableCell>
+                      <TableCell>Rack</TableCell>
+                      <TableCell>Lab Module</TableCell>
+                      <TableCell>MRV</TableCell>
+                      <TableCell>Controls</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {this.state.devices.map((device) => {
                       return (
-                        <Device
-                          key={device.hostname}
-                          device={device}
-                          showEditModal={this.showEditModal}
-                          showDeleteModal={this.showDeleteModal}
-                        />
+                        <TableRow key={device.hostname}>
+                          <TableCell>{device.hostname}</TableCell>
+                          <TableCell>{device.model}</TableCell>
+                          <TableCell>{device.serial}</TableCell>
+                          <TableCell>{device.mgmtIP}</TableCell>
+                          <TableCell>{device.vendor}</TableCell>
+                          <TableCell>{device.rack}</TableCell>
+                          <TableCell>{device.labmodule}</TableCell>
+                          <TableCell>{device.mrv}</TableCell>
+                          <TableCell>
+                            <Button
+                              raised
+                              label="Edit"
+                              color="primary"
+                              onClick={() => {this.openEditModal(device) }}>
+                                Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
                       )
                     })}
-                  </tbody>
+                  </TableBody>
                 </Table>
+                {!this.state.editingDevice
+                  ? null
+                  : (
+                    <EditModal
+                      isOpen={this.state.showEditModal}
+                      onSubmit={this.submitEditModal}
+                      onCancel={this.cancelEditModal}
+                      device={this.state.editingDevice} />
+                    )}
               </div>
           )
         }
