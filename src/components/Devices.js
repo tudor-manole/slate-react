@@ -111,9 +111,9 @@ class Devices extends React.Component {
   loadDevicesFromServer() {
     api.fetchDevices()
     .then((newDevices) => {
-      console.log(this.state);
       this.setState({devices: newDevices});
     });
+    console.log(this.state);
     console.log("finished loadDevicesFromServer");
 
   }
@@ -128,13 +128,11 @@ class Devices extends React.Component {
     this.setState({ showEditModal: true });
   }
 
-  submitEditModal(device) {
+  submitEditModal(newDevice) {
     this.setState({ showEditModal: false });
+    api.updateDevice(newDevice);
     this.setState({ editingDevice: null });
-
-    api.updateDevice(device);
     this.loadDevicesFromServer();
-    // this.forceUpdate();
   }
 
   cancelEditModal(device) {
